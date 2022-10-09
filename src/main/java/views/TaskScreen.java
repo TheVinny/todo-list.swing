@@ -196,7 +196,6 @@ public class TaskScreen extends javax.swing.JDialog {
     private void saveTaskButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveTaskButtonActionPerformed
         try {
             Task task = new Task();
-            project= new Project();
             task.setProject_id(project.getId());
             task.setName(titleInput.getText());
             task.setDescription(descriptionInput.getText());

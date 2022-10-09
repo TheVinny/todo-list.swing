@@ -14,7 +14,10 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
+import javax.swing.table.DefaultTableModel;
 import model.Project;
+import model.Task;
+import model.TaskTableModel;
 
 /**
  *
@@ -24,7 +27,7 @@ public class Home extends javax.swing.JFrame {
 
     ProjectDTO ProjectController;
     TaskDTO TaskController;
-    
+    TaskTableModel taskModel;
     DefaultListModel projectModel;
     
     public Home() {
@@ -228,7 +231,13 @@ public class Home extends javax.swing.JFrame {
         tableTaskList.setGridColor(new java.awt.Color(255, 255, 255));
         tableTaskList.setRowHeight(40);
         tableTaskList.setSelectionBackground(new java.awt.Color(153, 0, 102));
+        tableTaskList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         tableTaskList.setShowVerticalLines(false);
+        tableTaskList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tableTaskListMouseClicked(evt);
+            }
+        });
         tablePane.setViewportView(tableTaskList);
 
         javax.swing.GroupLayout taskListsPanelLayout = new javax.swing.GroupLayout(taskListsPanel);
@@ -282,13 +291,10 @@ public class Home extends javax.swing.JFrame {
                 .addGroup(backgroundLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(projectsListsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(Projects, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(backgroundLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(backgroundLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(taskListsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(backgroundLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(Tasks, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(taskListsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(Tasks, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(6, 6, 6))
         );
         backgroundLayout.setVerticalGroup(
@@ -333,13 +339,34 @@ public class Home extends javax.swing.JFrame {
 
     private void titleIconTaskMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_titleIconTaskMouseClicked
       TaskScreen taskScreen = new TaskScreen(this, rootPaneCheckingEnabled);
-      taskScreen.setProject(null);
+      int projectIndex = projectList.getSelectedIndex();
+      Project project = (Project) projectModel.get(projectIndex);
+      
+      taskScreen.setProject(project);
       taskScreen.setVisible(true);
     }//GEN-LAST:event_titleIconTaskMouseClicked
 
     private void projectListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_projectListMouseClicked
-      System.out.println();
+      int projectIndex = projectList.getSelectedIndex();
+      Project project = (Project) projectModel.get(projectIndex);
+
+      loadTasks(project.getId());
     }//GEN-LAST:event_projectListMouseClicked
+
+    private void tableTaskListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableTaskListMouseClicked
+       int rowIndex = tableTaskList.rowAtPoint(evt.getPoint());
+       int columnIndex = tableTaskList.columnAtPoint(evt.getPoint());
+       
+       switch(columnIndex) {
+        case 3:
+          Task task = taskModel.getTask().get(rowIndex);
+          TaskController.Update(task);
+        case 4:
+          break;
+        case 5:
+          break;
+       }
+    }//GEN-LAST:event_tableTaskListMouseClicked
 
     /**
      * @param args the command line arguments
@@ -362,10 +389,6 @@ public class Home extends javax.swing.JFrame {
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(Home.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-        //</editor-fold>
-
-        /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new Home().setVisible(true);
@@ -396,6 +419,29 @@ public class Home extends javax.swing.JFrame {
     private javax.swing.JLabel titleProjectList;
     // End of variables declaration//GEN-END:variables
    
+    
+    public void showTaskTable(boolean hasTasks) {
+        if (hasTasks) {
+          if(emptyListPanel.isVisible()){
+             emptyListPanel.setVisible(false);
+             taskListsPanel.remove(emptyListPanel);
+          }
+          taskListsPanel.add(tablePane);
+          tablePane.setVisible(true);
+          tablePane.setSize(taskListsPanel.getWidth(), taskListsPanel.getHeight());
+        } 
+        else {
+            if (tablePane.isVisible()) {
+                tablePane.setVisible(false);
+                taskListsPanel.remove(tablePane);
+            }
+            taskListsPanel.add(emptyListPanel);
+            emptyListPanel.setVisible(true);
+            emptyListPanel.setSize(taskListsPanel.getWidth(), taskListsPanel.getHeight());
+        
+        }
+    }
+    
     public void decorateTableTask() {
       tableTaskList.getTableHeader().setFont(new Font("Arial",Font.BOLD,14));
       tableTaskList.getTableHeader().setBackground(new Color(204,0,112));
@@ -412,6 +458,14 @@ public class Home extends javax.swing.JFrame {
     public void initComponentsModel() {
       projectModel = new DefaultListModel<Project>();
       loadProjects();
+  
+      taskModel = new TaskTableModel();
+      tableTaskList.setModel(taskModel);
+      if (!projectModel.isEmpty()) {
+          projectList.setSelectedIndex(0);
+          Project proj = (Project) projectModel.get(0);
+            loadTasks(proj.getId());
+      }
     }
     
     public void  loadProjects() {
@@ -424,7 +478,12 @@ public class Home extends javax.swing.JFrame {
           projectModel.addElement(project);
         }
         projectList.setModel(projectModel);
-      
+    }
+    
+    public void loadTasks(String project_id) {
+      List<Task> tasks = TaskController.getAll(project_id);
+      taskModel.setTask(tasks);
+      showTaskTable(!tasks.isEmpty());
     }
     
 }
