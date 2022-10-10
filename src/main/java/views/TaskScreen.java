@@ -10,6 +10,12 @@ import java.util.Date;
 import model.Project;
 import model.Task;
 import Controller.TaskDTO;
+import java.text.ParseException;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 /**
@@ -19,7 +25,8 @@ import javax.swing.JOptionPane;
 public class TaskScreen extends javax.swing.JDialog {
     TaskDTO Controller;
     Project project;
-
+    String taskid;
+    private boolean isEditing = false;
     public TaskScreen(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         Controller = new TaskDTO();
@@ -57,7 +64,7 @@ public class TaskScreen extends javax.swing.JDialog {
         title.setBackground(new java.awt.Color(255, 255, 255));
         title.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
         title.setForeground(new java.awt.Color(255, 255, 255));
-        title.setText("Projects");
+        title.setText("Tasks");
 
         iconTask.setIcon(new javax.swing.ImageIcon("C:\\Users\\vinny\\Documents\\NetBeansProjects\\mytodo\\src\\main\\java\\assets\\task.png")); // NOI18N
 
@@ -194,20 +201,55 @@ public class TaskScreen extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void saveTaskButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveTaskButtonActionPerformed
+
         try {
+             if (titleInput.getText().isEmpty()) {
+               JOptionPane.showMessageDialog(rootPane, "Insira o nome da Task");
+               return;
+             }
+             if (timeField.getText().isEmpty()) {
+               JOptionPane.showMessageDialog(rootPane, "Insira o prazo da task");
+               return;
+             }
             Task task = new Task();
+            
             task.setProject_id(project.getId());
+            
             task.setName(titleInput.getText());
+            
             task.setDescription(descriptionInput.getText());
+            
             task.setNotes(notesInput.getText());
+            
             SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+            
             Date deadline = null;
+            
             deadline = format.parse(timeField.getText());
+            
             task.setDeadline(deadline);
-            Controller.Save(task);
-            JOptionPane.showMessageDialog(rootPane, "sucess on save");
+            
+            System.out.print(task.getName());
+            
+            if(isEditing){
+                
+              task.setId(taskid);
+              
+              Controller.Update(task);
+              
+              JOptionPane.showMessageDialog(rootPane, "sucess on update");
+              
+            }
+            else{
+                
+              JOptionPane.showMessageDialog(rootPane, "sucess on save");
+              
+              Controller.Save(task);
+            }
+            
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(rootPane, e.getMessage());
+            throw new RuntimeException(e);
+//            JOptionPane.showMessageDialog(rootPane, e.getMessage());
         }
         this.dispose();
     }//GEN-LAST:event_saveTaskButtonActionPerformed
@@ -266,7 +308,50 @@ public class TaskScreen extends javax.swing.JDialog {
     private javax.swing.JTextField titleInput;
     // End of variables declaration//GEN-END:variables
 
+    public void setProject(Project project, String taskid) {
+        this.project = project;
+        this.taskid = taskid;
+    }
+    
     public void setProject(Project project) {
         this.project = project;
     }
+    
+    public void setValues(Task task) {
+        setIsEditing(true);
+        titleInput.setText(task.getName());
+        descriptionInput.setText(task.getDescription());
+        notesInput.setText(task.getNotes());
+        timeField.setText(task.getDeadline().toString());
+        String day, month, year;
+        
+        DateTimeFormatter datetime = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+        TemporalAccessor format = datetime.parse(timeField.getText().replace("-","/"));
+        
+        day = String.valueOf(format.get(ChronoField.DAY_OF_MONTH));
+        
+        month = String.valueOf(format.get(ChronoField.MONTH_OF_YEAR));
+        
+        year = String.valueOf(format.get(ChronoField.YEAR));
+        
+        if (format.get(ChronoField.DAY_OF_MONTH) < 10){
+            
+          day = "0".concat(day);
+        }else{
+          day = String.valueOf(format.get(ChronoField.DAY_OF_MONTH));
+        }
+        
+        if (format.get(ChronoField.MONTH_OF_YEAR) < 10){
+          month = "0".concat(month);
+        }else{
+          month = String.valueOf(format.get(ChronoField.MONTH_OF_YEAR));
+        }
+        timeField.setText(day + "/" + month + "/" + year);
+        
+    }
+
+    public void setIsEditing(boolean isEditing) {
+        this.isEditing = isEditing;
+    }
+    
 }

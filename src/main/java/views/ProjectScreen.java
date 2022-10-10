@@ -167,7 +167,10 @@ public class ProjectScreen extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void saveProjectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveProjectButtonActionPerformed
-
+        if(titleInput.getText().isEmpty()) {
+          JOptionPane.showMessageDialog(rootPane, "Campo name é obrigatório");
+          return;
+        }
         try {
           Project project = new Project();
           project.setName(titleInput.getText());

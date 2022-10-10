@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package views;
 
 import Controller.ProjectDTO;
@@ -14,10 +10,13 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import model.Project;
 import model.Task;
 import model.TaskTableModel;
+import mytodo.ButtonCellRender;
+import mytodo.DeadlineCellRender;
 
 /**
  *
@@ -32,9 +31,11 @@ public class Home extends javax.swing.JFrame {
     
     public Home() {
         initComponents();
-        decorateTableTask();
+        
         initialData();
         initComponentsModel();
+        
+        decorateTableTask();
     }
 
     @SuppressWarnings("unchecked")
@@ -101,6 +102,7 @@ public class Home extends javax.swing.JFrame {
         );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("To-Do");
         setMinimumSize(new java.awt.Dimension(600, 650));
 
         background.setBackground(new java.awt.Color(204, 204, 204));
@@ -184,7 +186,7 @@ public class Home extends javax.swing.JFrame {
             .addGroup(TasksLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(taskTitleList)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 276, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(titleIconTask)
                 .addContainerGap())
         );
@@ -201,7 +203,9 @@ public class Home extends javax.swing.JFrame {
         );
 
         taskListsPanel.setBackground(new java.awt.Color(255, 255, 255));
+        taskListsPanel.setLayout(new java.awt.BorderLayout());
 
+        tableTaskList.setCellSelectionEnabled(false);
         tableTaskList.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -232,7 +236,8 @@ public class Home extends javax.swing.JFrame {
         tableTaskList.setRowHeight(40);
         tableTaskList.setSelectionBackground(new java.awt.Color(153, 0, 102));
         tableTaskList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        tableTaskList.setShowVerticalLines(false);
+        tableTaskList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tableTaskList.setShowGrid(false);
         tableTaskList.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 tableTaskListMouseClicked(evt);
@@ -240,16 +245,7 @@ public class Home extends javax.swing.JFrame {
         });
         tablePane.setViewportView(tableTaskList);
 
-        javax.swing.GroupLayout taskListsPanelLayout = new javax.swing.GroupLayout(taskListsPanel);
-        taskListsPanel.setLayout(taskListsPanelLayout);
-        taskListsPanelLayout.setHorizontalGroup(
-            taskListsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tablePane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-        );
-        taskListsPanelLayout.setVerticalGroup(
-            taskListsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tablePane, javax.swing.GroupLayout.Alignment.TRAILING)
-        );
+        taskListsPanel.add(tablePane, java.awt.BorderLayout.CENTER);
 
         projectsListsPanel.setBackground(new java.awt.Color(255, 255, 255));
 
@@ -341,9 +337,16 @@ public class Home extends javax.swing.JFrame {
       TaskScreen taskScreen = new TaskScreen(this, rootPaneCheckingEnabled);
       int projectIndex = projectList.getSelectedIndex();
       Project project = (Project) projectModel.get(projectIndex);
-      
+     
       taskScreen.setProject(project);
       taskScreen.setVisible(true);
+      
+      taskScreen.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosed(WindowEvent e) {
+            loadTasks(project.getId());
+        }
+      });    
     }//GEN-LAST:event_titleIconTaskMouseClicked
 
     private void projectListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_projectListMouseClicked
@@ -356,14 +359,36 @@ public class Home extends javax.swing.JFrame {
     private void tableTaskListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableTaskListMouseClicked
        int rowIndex = tableTaskList.rowAtPoint(evt.getPoint());
        int columnIndex = tableTaskList.columnAtPoint(evt.getPoint());
-       
+       int projectIndex = projectList.getSelectedIndex();
+       Task task = taskModel.getTask().get(rowIndex);
+       TaskScreen taskScreen;
        switch(columnIndex) {
         case 3:
-          Task task = taskModel.getTask().get(rowIndex);
           TaskController.Update(task);
+          break;
         case 4:
+          Project projectUpdate = (Project) projectModel.get(projectIndex);
+          taskScreen = new TaskScreen(this, rootPaneCheckingEnabled);
+          taskScreen.setValues(task);
+          taskScreen.setProject(projectUpdate, task.getId());
+          taskScreen.setVisible(true);
+          
+          taskScreen.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+            Project projectUpdate = (Project) projectModel.get(projectIndex);
+              loadTasks(projectUpdate.getId()); 
+            }});     
           break;
         case 5:
+           
+           int option = JOptionPane.showConfirmDialog(rootPane,"Deseja excluir excluir essa task","Excluir",1);
+           if (option == 0) {
+           Project project = (Project) projectModel.get(projectIndex);
+           TaskController.DeleteById(task.getId());
+           taskModel.getTask().remove(task);
+            loadTasks(project.getId());
+           }
           break;
        }
     }//GEN-LAST:event_tableTaskListMouseClicked
@@ -443,11 +468,22 @@ public class Home extends javax.swing.JFrame {
     }
     
     public void decorateTableTask() {
+      //Customizando Header da table;
       tableTaskList.getTableHeader().setFont(new Font("Arial",Font.BOLD,14));
       tableTaskList.getTableHeader().setBackground(new Color(204,0,112));
       tableTaskList.getTableHeader().setForeground(Color.white);
-      //gera uma auto organização das colunas
+      //gera uma auto organização das colunas;
       tableTaskList.setAutoCreateRowSorter(true);
+      
+      //Setando cor dinamica ao deadline column;
+      tableTaskList.getColumnModel().getColumn(2)
+        .setCellRenderer(new DeadlineCellRender());
+      
+      tableTaskList.getColumnModel().getColumn(4)
+        .setCellRenderer(new ButtonCellRender("edit"));
+      tableTaskList.getColumnModel().getColumn(5)
+        .setCellRenderer(new ButtonCellRender("delete"));
+      
     }
     
     public void initialData() {
