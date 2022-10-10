@@ -1,16 +1,11 @@
 
 package mytodo;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
-import java.util.Date;
 import javax.swing.JLabel;
 import javax.swing.JTable;
-import static javax.swing.SwingConstants.CENTER;
 import javax.swing.table.DefaultTableCellRenderer;
-import model.Task;
-import model.TaskTableModel;
 import javax.swing.ImageIcon;
 
 public class ButtonCellRender extends DefaultTableCellRenderer {

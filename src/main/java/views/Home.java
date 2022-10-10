@@ -7,11 +7,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
-import javax.swing.table.DefaultTableModel;
 import model.Project;
 import model.Task;
 import model.TaskTableModel;
@@ -381,7 +379,6 @@ public class Home extends javax.swing.JFrame {
             }});     
           break;
         case 5:
-           
            int option = JOptionPane.showConfirmDialog(rootPane,"Deseja excluir excluir essa task","Excluir",1);
            if (option == 0) {
            Project project = (Project) projectModel.get(projectIndex);
@@ -472,7 +469,7 @@ public class Home extends javax.swing.JFrame {
       tableTaskList.getTableHeader().setFont(new Font("Arial",Font.BOLD,14));
       tableTaskList.getTableHeader().setBackground(new Color(204,0,112));
       tableTaskList.getTableHeader().setForeground(Color.white);
-      //gera uma auto organização das colunas;
+      //gera uma auto organizaï¿½ï¿½o das colunas;
       tableTaskList.setAutoCreateRowSorter(true);
       
       //Setando cor dinamica ao deadline column;
